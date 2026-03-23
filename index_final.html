@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+<title>CBAYC — Formación Empresarial con IA Avanzada</title>
+<style>
+  :root {
+    --bg: #0A1628; --bg2: #0D1B36; --accent: #00D4A8; --accent-dark: #00B4D8;
+    --gold: #FFB800; --text: #F0F6FF; --muted: rgba(180,200,230,0.5);
+    --card: #15243B; --border: rgba(255,255,255,0.08); --black: #060E1E;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;width:100%;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--text);overflow:hidden;position:fixed;overscroll-behavior:none;}
+  #root{width:100%;height:100%;display:flex;flex-direction:column;position:relative;z-index:1;}
+  
+  .watermark-container { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; opacity: 0.15; }
+  .watermark { position: absolute; color: #fff; font-size: 1.5rem; font-weight: 900; transform: rotate(-25deg); white-space: nowrap; }
+
+  .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1; padding-bottom: 90px; }
+  .scroll::-webkit-scrollbar { display: none; }
+
+  .btn { border:none; border-radius:15px; padding:16px; font-weight:700; cursor:pointer; transition:0.2s; display:flex; align-items:center; justify-content:center; gap:10px; font-size:1rem; width:100%; outline:none; }
+  .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent-dark)); color: var(--black); }
+  .btn-outline-gold { border: 2px solid var(--gold); color: var(--gold); background: none; }
+  .btn-google { background: #fff; color: #444; margin-top: 15px; border: 1px solid #ddd; }
+  .btn-save { background: var(--accent); color: var(--black); border-radius: 12px; font-weight: 800; border:none; height:45px; cursor:pointer; }
+
+  .input-field { background: #1C2C45; border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; color: #fff; width: 100%; outline: none; margin-bottom: 12px; }
+  
+  .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 15px; padding: 12px; text-align: center; border-bottom: 3px solid var(--accent); transition: transform 0.2s; }
+  .stat-val { font-size: 1.5rem; font-weight: 800; color: #fff; }
+  .stat-lbl { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  
+  .course-card { background: #15243B; border: 1px solid var(--border); border-radius: 20px; padding: 18px; margin-bottom: 12px; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: 0.2s; }
+  .course-card:hover { transform: translateX(5px); border-color: var(--accent); }
+  
+  nav { height: 75px; background: #0A1628; display: flex; border-top: 1px solid var(--border); padding-bottom: env(safe-area-inset-bottom); position: fixed; bottom: 0; width: 100%; z-index: 100; }
+  nav button { flex: 1; background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: var(--muted); cursor: pointer; }
+  nav button.active { color: var(--accent); }
+
+  .message { max-width: 85%; padding: 12px 16px; border-radius: 20px; line-height: 1.6; word-wrap: break-word; margin-bottom: 15px; }
+  .msg-assistant { background: var(--card); color: var(--text); border-left: 4px solid var(--accent); border-bottom-left-radius: 4px; }
+  .msg-user { background: var(--accent); color: var(--black); align-self: flex-end; border-bottom-right-radius: 4px; font-weight: 700; }
+
+  .lesson-body { font-size: 1.05rem; line-height: 1.8; color: var(--text); padding-top: 10px; }
+  .lesson-body h2 { color: var(--accent); margin: 30px 0 15px; font-size: 1.4rem; border-left: 4px solid var(--accent); padding-left: 12px; }
+  .lesson-body p { margin-bottom: 22px; }
+
+  /* Home specific styles */
+  .hero-gradient { background: linear-gradient(135deg, rgba(0,212,168,0.1) 0%, rgba(0,180,216,0.05) 100%); border-radius: 20px; padding: 20px; margin-bottom: 24px; border: 1px solid var(--border); }
+  .progress-bar { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin: 10px 0; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-dark)); transition: width 0.5s ease; }
+  .recommendation-card { background: linear-gradient(135deg, #1A2E44, #0F1D2F); border-radius: 20px; padding: 16px; margin-bottom: 12px; cursor: pointer; transition: 0.2s; border: 1px solid var(--border); }
+  .recommendation-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+</style>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+</head>
+<body>
+<div class="watermark-container" id="watermarks"></div>
+<div id="root"></div>
+
+<script>
+const { useState, useEffect, useRef } = React;
+const h = React.createElement;
+
+async function hashPW(pw) {
+    const enc = new TextEncoder();
+    const d = enc.encode(pw);
+    const hash = await crypto.subtle.digest('SHA-256', d);
+    return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// --- DB PROFESIONAL COMPLETA (3 CURSOS) ---
+const COURSES_DB = [
+  {
+    id: "admin_basico", icon: "🏢", title: "Administración Básica", dur: "58 min - 10 lecc.",
+    lessons: [
+      { t: "1. Fundamentos Profesionales", c: "**🟢 INTRODUCCIÓN**\n\nLa administración es la base del éxito empresarial sostenible.\n\n**📌 TÉCNICA**\n\nPlanificación, Organización, Dirección y Control: los pilares de la eficiencia rentable." },
+      { t: "2-10... Bases de Gestión", c: "## Temario\nEstrategia SMART, Liderazgo, KPIs de valor y Cultura Ética corporativa." }
+    ]
+  },
+  {
+    id: "contabilidad_pro", icon: "📊", title: "Contabilidad Pro", dur: "25 min - 2 lecc.",
+    lessons: [{ t: "Balance y Patrimonio", c: "## Activo = Pasivo + Patrimonio\nDomina la solvencia técnica de cualquier organización." }]
+  },
+  {
+    id: "admin_avanzado", icon: "🚀", title: "Administración Avanzada", dur: "85 min - 9 lecc.",
+    lessons: [
+      { t: "1: Planeación Estratégica Senior", c: "**🟢 ESTRATEGIA**\n\nDefinir Visión, Misión y OKRs para un crecimiento a 10 años.\n\n**💼 EJEMPLO**\n\nApple vs la competencia: el valor de la diferenciación estratégica." },
+      { t: "2-9... Gestión Senior", c: "## Avanzado\nScrum, PESTEL, BI, KPI Financieros y Liderazgo Transformacional de alto impacto." }
+    ]
+  }
+];
+
+function App() {
+  const [screen, setScreen] = useState('welcome');
+  const [tab, setTab] = useState('home');
+  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('cbayc_u')));
+  const [curCourse, setCurCourse] = useState(null);
+  const [curLesson, setCurLesson] = useState(null);
+  const [lIdx, setLIdx] = useState(0);
+
+  // Perfil Contexto
+  const [userContext, setUserContext] = useState(() => {
+    const userId = user?.id || user?.email || 'guest';
+    const saved = localStorage.getItem(`cbayc_context_${userId}`);
+    return saved ? JSON.parse(saved) : { level: 'intermedio', completedCourses: [], interests: ['administración'], streak: 5 };
+  });
+
+  useEffect(() => {
+    if (user?.email) { localStorage.setItem(`cbayc_context_${user.email}`, JSON.stringify(userContext)); }
+  }, [userContext, user]);
+
+  const markCourseCompleted = (courseId) => {
+    if (!userContext.completedCourses.includes(courseId)) {
+      setUserContext(prev => ({ ...prev, completedCourses: [...prev.completedCourses, courseId] }));
+      alert(`🎉 ¡Curso completado! Perfil actualizado.`);
+    }
+  };
+
+  // Auth States
+  const [loginE, setLoginE] = useState('');
+  const [loginP, setLoginP] = useState('');
+  const [regN, setRegN] = useState('');
+  const [regE, setRegE] = useState('');
+  const [regP, setRegP] = useState('');
+  const [regC, setRegC] = useState('');
+
+  // AI Híbrida
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('cbayc_k') || '');
+  const [messages, setMessages] = useState([{role:'assistant', content:'🤖 **Consultor CBAYC**\n\nBienvenido líder. He cargado tu progreso para darte asesoría personalizada.'}]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const scrollRef = useRef(null);
+
+  useEffect(() => { scrollRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, loading]);
+
+  const handleLogin = async () => {
+    const users = JSON.parse(localStorage.getItem('cbayc_users') || '[]');
+    const u = users.find(x => x.email === loginE);
+    if(!u) return alert("Email no registrado");
+    const h = await hashPW(loginP);
+    if(u.passwordHash !== h) return alert("Contraseña incorrecta");
+    setUser(u); localStorage.setItem('cbayc_u', JSON.stringify(u)); setScreen('app');
+  };
+
+  const handleRegister = async () => {
+    if(!regE || !regP || regP !== regC) return alert("Datos inválidos");
+    const users = JSON.parse(localStorage.getItem('cbayc_users') || '[]');
+    const h = await hashPW(regP);
+    const nu = { name: regN, email: regE, passwordHash: h };
+    users.push(nu); localStorage.setItem('cbayc_users', JSON.stringify(users));
+    setUser(nu); localStorage.setItem('cbayc_u', JSON.stringify(nu)); setScreen('app');
+  };
+
+  const handleGoogleAuth = () => {
+    const nu = { name: 'Estudiante Google', email: 'user@google.com', passwordHash: 'OAUTH' };
+    setUser(nu); localStorage.setItem('cbayc_u', JSON.stringify(nu)); setScreen('app');
+  };
+
+  const sendToAI = async (qText) => {
+    const q = qText || input; if(!q.trim()) return;
+    const utdMessages = [...messages, { role: 'user', content: q }];
+    setMessages(utdMessages); setInput(''); setLoading(true);
+    if(!apiKey) { 
+        setTimeout(() => { setMessages([...utdMessages, { role: 'assistant', content: `🤖 **Consultor Local**\n\nBuen análisis sobre "${q}". Te recomiendo completar el nuevo curso de **Administración Avanzada** para dominar la planificación OKR.` }]); setLoading(false); }, 1200); 
+        return; 
+    }
+    try {
+      const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify({ model: 'gpt-3.5-turbo', messages: [{ role: 'system', content: `Senior consultor para ${user?.name}. Lvl: ${userContext.level}.` }, ...utdMessages.slice(-10)], temperature: 0.7 })
+      });
+      const d = await resp.json();
+      setMessages([...utdMessages, { role: 'assistant', content: d.choices[0].message.content }]);
+    } catch(e) { setMessages([...utdMessages, { role: 'assistant', content: 'Error API.' }]); }
+    setLoading(false);
+  };
+
+  if(screen === 'welcome') return h('div', {className:'fade-in', style:{height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:40, textAlign:'center'}}, h('div',{className:'logo-square', style:{marginBottom:20}},'CB'), h('h1',{style:{color:'var(--gold)', fontSize:'3rem', fontWeight:900}},'CBAYC'), h('p',{style:{color:'rgba(255,255,255,0.6)', marginBottom:50}},'Formación Empresarial Senior'), h('button',{className:'btn btn-primary', style:{marginBottom:15}, onClick:()=>setScreen('login')},'Ingresar'), h('button',{className:'btn btn-outline-gold', onClick:()=>setScreen('register')},'Registrarse'));
+
+  if(screen === 'login') return h('div', {className:'fade-in scroll', style:{padding:32}}, h('h1',{style:{color:'var(--gold)',fontSize:'2.2rem',fontWeight:900}},'Acceder'), h('input',{className:'input-field', placeholder:'Email', value:loginE, onChange:e=>setLoginE(e.target.value)}), h('input',{className:'input-field', type:'password', placeholder:'Pass', value:loginP, onChange:e=>setLoginP(e.target.value)}), h('button',{className:'btn btn-primary', onClick:handleLogin},'Entrar'), h('button',{className:'btn btn-google', onClick:handleGoogleAuth},'Continuar con Google'));
+
+  if(screen === 'register') return h('div', {className:'fade-in scroll', style:{padding:32}}, h('h1',{style:{color:'var(--gold)',fontSize:'2.2rem',fontWeight:900}},'Registro'), h('input',{className:'input-field', placeholder:'Nombre', value:regN, onChange:e=>setRegN(e.target.value)}), h('input',{className:'input-field', placeholder:'Email', value:regE, onChange:e=>setRegE(e.target.value)}), h('input',{className:'input-field', type:'password', placeholder:'Pass', value:regP, onChange:e=>setRegP(e.target.value)}), h('input',{className:'input-field', type:'password', placeholder:'Confirmar', value:regC, onChange:e=>setRegC(e.target.value)}), h('button',{className:'btn btn-primary', onClick:handleRegister},'Crear cuenta'), h('button',{className:'btn btn-google', onClick:handleGoogleAuth},'Registrarse con Google'));
+
+  if(curLesson) return h('div', {className:'fade-in scroll', style:{padding:24, background:'#0D1B36'}}, h('h1',{style:{color:'var(--gold)',fontSize:'1.6rem',marginBottom:25}}, curLesson.t), h('div',{className:'lesson-body'}, curLesson.c.split('\n').map((p,i)=>h('p',{key:i},p))), h('div',{style:{display:'flex',gap:15,marginTop:40}}, h('button',{className:'btn btn-outline-gold', onClick:()=>setCurLesson(null)},'Regresar'), lIdx === curCourse.lessons.length - 1 ? h('button', {className: 'btn btn-primary', onClick: () => { markCourseCompleted(curCourse.id); setCurLesson(null); }}, '✅ Completar curso') : h('button', { className: 'btn btn-primary', onClick: () => { const n=lIdx+1; setLIdx(n); setCurLesson(curCourse.lessons[n]); } }, 'Siguiente')));
+
+  let view;
+  if(tab === 'home') {
+    const completed = userContext.completedCourses.length;
+    const total = COURSES_DB.length;
+    const percent = (completed / total) * 100;
+    const hr = new Date().getHours();
+    const greet = hr < 12 ? 'Buenos días' : hr < 18 ? 'Buenas tardes' : 'Buenas noches';
+    
+    view = h('div', {className:'fade-in scroll', style:{padding:24}},
+      h('div', {style:{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20}},
+        h('div', {}, h('p', {style:{color:'var(--muted)', fontSize:'0.9rem'}}, greet), h('h1', {style:{fontSize:'1.8rem', fontWeight:800}}, user?.name || 'Líder', ' 👋')),
+        h('div', {style:{width:50, height:50, background:'var(--accent)', borderRadius:25, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.5rem', fontWeight:'bold', color:'var(--black)'}}, user?.name?.charAt(0))
+      ),
+      h('div', {className:'hero-gradient'},
+        h('div', {style:{display:'flex', justifyContent:'space-between', marginBottom:12}}, h('h3', null, 'Tu progreso'), h('span', {style:{color:'var(--accent)'}}, `${completed}/${total} cursos`)),
+        h('div', {className:'progress-bar'}, h('div', {className:'progress-fill', style:{width: `${percent}%`}})),
+        h('p', {style:{color:'var(--muted)', fontSize:'0.75rem', marginTop:8}}, percent === 100 ? '🎉 Diplomado Senior alcanzado!' : `Te falta poco para ser experto.`)
+      ),
+      h('div', {style:{display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:30}},
+        [{v:completed, l:'Cursos', i:'🏆'}, {v:21, l:'Lecc.', i:'📚'}, {v:userContext.streak, l:'Racha', i:'🔥'}, {v:userContext.level==='avanzado'?'⭐⭐⭐':'⭐⭐', l:'Nivel', i:'📈'}].map((s,i) => h('div', {key:i, className:'stat-card'}, 
+          h('div', {style:{fontSize:'1.5rem'}}, s.i), h('div', {className:'stat-val'}, s.v), h('div', {className:'stat-lbl'}, s.l)
+        ))
+      ),
+      h('h2', {style:{fontSize:'1.2rem', marginBottom:15}}, '🎯 Recomendado por tu IA'),
+      COURSES_DB.filter(c => !userContext.completedCourses.includes(c.id)).slice(0, 2).map(c => 
+        h('div', {key:c.id, className:'recommendation-card', onClick:()=>{setCurCourse(c); setCurLesson(c.lessons[0]); setLIdx(0);}},
+          h('div', {style:{display:'flex', alignItems:'center', gap:12}}, h('span', {style:{fontSize:'1.8rem'}}, c.icon), h('div', null, h('h4', null, c.title), h('p', {style:{fontSize:'0.75rem', color:'var(--muted)'}}, c.dur)))
+        )
+      )
+    );
+  }
+  else if(tab === 'courses') view = h('div',{className:'fade-in scroll', style:{padding:24}}, h('h1',null,'Cursos'), COURSES_DB.map(c=>h('div',{key:c.id,className:'course-card', onClick:()=>{setCurCourse(c);setCurLesson(c.lessons[0]);setLIdx(0);}}, h('span',{style:{fontSize:'1.5rem'}},c.icon), h('div',{className:'course-info'}, h('div',{className:'course-title'},c.title), h('div',null,userContext.completedCourses.includes(c.id)?'✅ COMPLETADO':c.dur)))));
+  else if(tab === 'ai') view = h('div',{className:'fade-in', style:{padding:24, display:'flex', flexDirection:'column', height:'100%'}}, h('div',{style:{display:'flex',gap:10,marginBottom:15}}, h('input',{className:'input-field', style:{flex:1,marginBottom:0}, type:'password', value:apiKey, onChange:e=>{setApiKey(e.target.value);localStorage.setItem('cbayc_k',e.target.value)}, placeholder:'sk-... (Opcional)'}), h('button',{className:'btn btn-save', style:{width:'30%'}, onClick:()=>setMessages([{role:'assistant', content:'Chat reiniciado.'}])},'🗑️')), h('div',{className:'scroll', style:{display:'flex',flexDirection:'column'}}, messages.map((m,i)=>h('div',{key:i,className:`message msg-${m.role}`}, m.content.split('\n').map((l,j)=>h('p',{key:j, style:{marginBottom:10}},l)))), loading && h('div',{className:'message msg-assistant'},'🤖 Pensando...'), h('div',{ref:scrollRef})), h('div',{style:{padding:15,background:'#1C2C45',borderRadius:20,display:'flex',gap:10,marginTop:12}}, h('input',{style:{flex:1,background:'none',border:'none',color:'white',outline:'none'}, placeholder:'Preguntar...', value:input, onChange:e=>setInput(e.target.value), onKeyPress:e=>e.key==='Enter' && sendToAI()}), h('button',{onClick:()=>sendToAI(), style:{background:'none',border:'none',color:'var(--accent)',fontWeight:800}},'ENVIAR')));
+  else if(tab === 'profile') view = h('div',{className:'fade-in scroll',style:{padding:24,textAlign:'center'}}, h('div',{style:{width:70,height:70,backgroundColor:'var(--accent)',borderRadius:35,margin:'30px auto 20px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'2.2rem', color:'var(--black)', fontWeight:900}}, user?.name?.charAt(0)), h('h2',null,user?.name), h('p',null,user?.email), h('div', { style: { marginTop: 20, textAlign: 'left', background: 'var(--card)', borderRadius: 20, padding: 20 } }, h('h3', { style: { marginBottom: 15, color: 'var(--accent)', fontSize:'1rem' } }, '🎓 Perfil Senior'), h('p', null, 'Nivel: ' + userContext.level.toUpperCase()), h('p', null, 'Cursos completados: ' + userContext.completedCourses.length)), h('button',{className:'btn btn-outline-gold', style:{marginTop:40}, onClick:()=>{localStorage.removeItem('cbayc_u'); window.location.reload();}},'Cerrar sesión'));
+
+  return h('div', {style:{height:'100%', position:'relative'}}, view, h('nav', null, [{id:'home',l:'Inicio',i:'🏠'},{id:'courses',l:'Cursos',i:'📚'},{id:'ai',l:'IA',i:'🤖'},{id:'profile',l:'Perfil',i:'👤'}].map(n => h('button', {key:n.id, className: tab===n.id?'active':'', onClick:()=>setTab(n.id)}, h('span',{style:{fontSize:'1.4rem'}},n.i), h('span',{style:{fontSize:'0.6rem'}},n.l)))));
+}
+
+const words = ['ADMINISTRACIÓN','CONTABILIDAD','FINANZAS','GESTIÓN','ESTRATEGIA'];
+const ctn = document.getElementById('watermarks');
+for(let i=0; i<10; i++) {
+    const el = document.createElement('div'); el.className = 'watermark';
+    el.innerText = words[i % 5]; el.style.top = (Math.random()*90)+'%'; el.style.left = (Math.random()*85)+'%';
+    ctn.appendChild(el);
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+</script>
+</body>
+</html>
